@@ -10,7 +10,8 @@ export const DEFAULTS = {
   GRID: 75, GRID_Z: 50, DEPTH: 120, GAP: 0.4, WALL: 0.9, STRIP_W: 11, STRIP_T: 2.2,
   KEY_DEPTH: 2.0, KEY_MOUTH: 3.0, KEY_LEN: 50, KEY_CLR: 0.15, KEY_DETENT: 0.25,
   PINCH_IN: 3.0, BACK_PINCH_Z: 2.5, BACK_KEY_LEN: 40, KEY_SETBACK: 5,
-  LOCK_DEPTH: 2.5, LOCK_MOUTH: 4.0, LOCK_CLR: 0.15, LOCK_HEAD_W: 12, LOCK_HEAD_H: 3,
+  LOCK_X: 8, LOCK_Y: 4.7, LOCK_BAR_W: 3.0, LOCK_BAR_T: 4.0, LOCK_CLR: 0.2, LOCK_HEAD_W: 10, LOCK_HEAD_H: 3,
+  FACE_LIP: 0.4, FACE_CLR: 0.15, FACE_SEAT: 1.2, FACE_CORNER: 0.8, SILL_CLR: 0.2, SILL_FLAT: 1.6,
   DRAWER_CLR: 0.45, DRAWER_TOP_CLR: 1.0, DRAWER_BOTTOM_CLR: 1.0, DRAWER_BACK_CLR: 0.6, DRAWER_FLOOR_CLR: 0.5, RUNNER_LIFT_CLR: 0.3,
   DRAWER_WALL: 0.9, DRAWER_FLOOR: 1.0, DRAWER_FRONT_T: 2.4,
   DOME_R: 24, DOME_DEPTH: 7, DOME_WALL: 1.2, TAB_W: 5,
@@ -19,7 +20,7 @@ export const DEFAULTS = {
   HANGER_W: 30, HANGER_T: 6, HANGER_RIB_LEN: 80, HANGER_FOOT_D: 12, HANGER_FOOT_T: 5, HANGER_TOP_MARGIN: 5,
   LEDGER_LEN: 250, LEDGER_W: 34, LEDGER_T: 4, LEDGER_RIB_W: 6, LEDGER_RIB_H: 3, LEDGER_CLR: 0.15, LEDGER_HOLE_PITCH: 25,
   ALEX_W: 292, ALEX_D: 524, ALEX_COLS: 3, ALEX_ROWS: 10, SPACER_H: 25, SPACER_WALL: 1.2,
-  FILLET_SHELL: 0.8, RIM_CHAMFER_IN: 0.5, RIM_CHAMFER_OUT: 0.3, FILLET_DRAWER: 1.6,
+  FILLET_SHELL: 0.8, FILLET_DRAWER: 1.6,
 };
 
 // Parameter groups and one-line descriptions for the Advanced panel.
@@ -33,13 +34,18 @@ export const PARAM_GROUPS = [
     KEY_LEN: 'layer key length', BACK_KEY_LEN: 'back key length', KEY_CLR: 'key clearance per side', KEY_DETENT: 'groove mouth pinch per side',
     PINCH_IN: 'pinch distance inside the back face', BACK_PINCH_Z: 'back groove pinch distance from each end', KEY_SETBACK: 'how far layer keys sit inside the back face',
   }],
-  ['Lock strip', {
-    LOCK_DEPTH: 'notch depth', LOCK_MOUTH: 'notch width at the face', LOCK_CLR: 'strip clearance per side', LOCK_HEAD_W: 'head width', LOCK_HEAD_H: 'head height',
+  ['Face and seat', {
+    FACE_LIP: 'lip left standing on the shell rim around the face (0 = none)', FACE_CLR: 'clearance between the face edge and the lip', FACE_SEAT: 'how deep the face sits into the shell front',
+    FACE_CORNER: 'round on the face corners (in plane)', SILL_CLR: 'clearance between the floor sill and the drawer bottom', SILL_FLAT: 'flat top of the floor sill, front to back',
+  }],
+  ['Lock pin', {
+    LOCK_X: 'pin centre from the left edge of each cell', LOCK_Y: 'pin centre from the shell front', LOCK_BAR_W: 'pin width (across)', LOCK_BAR_T: 'pin thickness (front to back)',
+    LOCK_CLR: 'hole clearance per side', LOCK_HEAD_W: 'head width', LOCK_HEAD_H: 'head height',
   }],
   ['Drawer', {
     DRAWER_CLR: 'side clearance to the shell', DRAWER_TOP_CLR: 'clearance to the ceiling', DRAWER_BOTTOM_CLR: 'clearance to the floor (the underside is channelled over the floor strip)', DRAWER_BACK_CLR: 'clearance to the back strip',
     DRAWER_FLOOR_CLR: 'clearance of the underside channel over the floor strip', RUNNER_LIFT_CLR: 'clearance under the strip', DRAWER_WALL: 'drawer wall', DRAWER_FLOOR: 'drawer floor',
-    DRAWER_FRONT_T: 'front plate', DOME_R: 'pull dome radius', DOME_DEPTH: 'pull dome depth', DOME_WALL: 'pull dome wall', TAB_W: 'pinch fin width',
+    DRAWER_FRONT_T: 'face plate thickness', DOME_R: 'pull dome radius', DOME_DEPTH: 'pull dome depth', DOME_WALL: 'pull dome wall', TAB_W: 'pinch fin width',
     DETENT_H: 'detent bump height', DETENT_LEN: 'detent bump length', DETENT_Z: 'detent bump height along the strip', SHELL_DETENT_Y: 'shell bump from the front', DETENT_GAP: 'gap behind the shell bump when closed',
   }],
   ['Wall mount', {
@@ -48,7 +54,7 @@ export const PARAM_GROUPS = [
     NUB_LEN: 'spacer nub length', NUB_CLR: 'nub and rib clearance',
   }],
   ['Finish', {
-    FILLET_SHELL: 'round on the shell outer edges (0 = sharp)', RIM_CHAMFER_IN: '45° chamfer on the shell rim into the drawer seat (0 = square)', RIM_CHAMFER_OUT: '45° chamfer on the outside of the shell rim; in + out ≤ wall − 0.1 (0 = square)', FILLET_DRAWER: 'round on the drawer front edges, up to the front plate thickness (0 = sharp)',
+    FILLET_SHELL: 'round on the shell outer edges (0 = sharp)', FILLET_DRAWER: 'round on the drawer face edges, up to the face plate thickness (0 = sharp)',
   }],
   ['IKEA Alex spacers', {
     ALEX_W: 'drawer inside width', ALEX_D: 'drawer inside depth', ALEX_COLS: 'modules across', ALEX_ROWS: 'modules along', SPACER_H: 'spacer height', SPACER_WALL: 'spacer wall',
@@ -123,6 +129,18 @@ function halfNub(p, along, a0, a1, dax, face, dirn, wax, wc, clr) {
   return clip(nb, pt, n);
 }
 
+// lock pin hole footprints for a part w cells wide: [x0, x1, y0, y1] in shell coordinates, one per cell
+function lockHoles(p, w) {
+  const hw = p.LOCK_BAR_W / 2 + p.LOCK_CLR, ht = p.LOCK_BAR_T / 2 + p.LOCK_CLR;
+  return [...Array(w)].map((_, i) => [p.GRID * i + p.LOCK_X - hw, p.GRID * i + p.LOCK_X + hw, p.LOCK_Y - ht, p.LOCK_Y + ht]);
+}
+// rounded rectangle cross-section in the (x, -z) frame used for front-face extrusions
+function roundedRectXZ(x0, x1, z0, z1, r) {
+  r = Math.max(0, Math.min(r, (x1 - x0) / 2 - 0.01, (z1 - z0) / 2 - 0.01));
+  const cs = M.CrossSection.square([x1 - x0 - 2 * r, z1 - z0 - 2 * r], false).translate([x0 + r, -z1 + r]);
+  return r > 0 ? cs.offset(r, 'Round', 2, 16) : cs;
+}
+
 function cylinderY(x, y0, y1, z, r0, r1) {
   // cylinder/cone along +y from y0 to y1
   const c = Mf().cylinder(y1 - y0, r0, r1 ?? r0, 48);
@@ -136,8 +154,8 @@ export function buildShell(p, w, h) {
   const xcs = [...Array(w)].map((_, i) => G * (i + 0.5) - GAP / 2);
   const zcs = [...Array(h)].map((_, j) => GZ * (j + 0.5) - GAP / 2);
   const fr = p.FILLET_SHELL;
-  let body = fr > 0 ? roundedBoxOpenFront(0, Wo, 0, D, 0, Ho, Math.min(fr, WALL)) : box(0, Wo, 0, D, 0, Ho);
-  body = cut(body, box(WALL, Wo - WALL, -1, D - WALL, WALL, Ho - WALL));
+  const env = fr > 0 ? roundedBoxOpenFront(0, Wo, 0, D, 0, Ho, Math.min(fr, WALL)) : box(0, Wo, 0, D, 0, Ho);
+  let body = cut(env, box(WALL, Wo - WALL, -1, D - WALL, WALL, Ho - WALL));
   // strips reach 0.1 mm into the wall, never to the outer face, so the rounded envelope stays untouched
   const e = WALL - 0.1;
   for (const xc of xcs) {
@@ -172,29 +190,23 @@ export function buildShell(p, w, h) {
       body = cut(body, trapPrism(2, -1, Ho + 1, 1, D, -1, 0, xc, KM, KD));
     }
   }
-  // chamfer the front rim: a 45° bevel from the face into the drawer seat (ci) and one on the outside (co),
-  // leaving a thin ridge between them. The front cd mm are rebuilt as slices: the outer boundary insets by
-  // co - y, the opening grows by ci - y (mitred, so the bevel meets itself at the corners like a frame).
-  const ci = Math.max(0, Math.min(p.RIM_CHAMFER_IN, WALL - 0.1));
-  const co = Math.max(0, Math.min(p.RIM_CHAMFER_OUT, WALL - 0.1 - ci));
-  const cd = Math.max(ci, co);
-  if (cd > 0) {
-    const N = Math.max(6, Math.min(24, Math.ceil(cd / 0.05)));
-    const ring = body.rotate([90, 0, 0]).slice(cd + 0.3);
-    const outer = ring.hull(), opening = outer.subtract(ring);
-    let stack = clip(body, [0, cd, 0], [0, -1, 0]);
-    for (let k = 0; k < N; k++) {
-      const y0 = cd * k / N, di = Math.max(0, ci - y0), dout = Math.max(0, co - y0);
-      let sl = dout > 1e-4 ? outer.offset(-dout, 'Round', 2, 16) : outer;
-      sl = sl.subtract(di > 1e-4 ? opening.offset(di, 'Miter', 2, 16) : opening);
-      stack = add(stack, Mf().extrude(sl, cd / N + 1e-3).rotate([-90, 0, 0]).translate([0, y0, 0]));
-    }
-    body = stack;
+  // the drawer face seats into the shell front: the front FACE_SEAT mm inside a FACE_LIP lip are cut away
+  // (this also trims the strip ends), so the face overlaps the rim and sits behind the lip
+  const LIP = Math.max(0, Math.min(p.FACE_LIP, WALL - 0.2)), SEAT = Math.max(0, p.FACE_SEAT);
+  if (SEAT > 0) body = cut(body, box(LIP, Wo - LIP, -1, SEAT, LIP, Ho - LIP));
+  // floor sill: the face cannot overlap the bottom rim (the drawer prints on its floor), so a sill across the
+  // front of the floor rises to SILL_CLR under the drawer, flat on top, 45° down to the floor at the back
+  const z0d = WALL + Math.min(p.DRAWER_BOTTOM_CLR, ST + p.DRAWER_FLOOR_CLR);
+  const SH = z0d - p.SILL_CLR, SF = p.SILL_FLAT;
+  if (SH > WALL + 0.05) {
+    const pts = [];
+    for (const x of [0, Wo]) for (const [y, z] of [[0, 0], [0, SH], [SF, SH], [SF + SH - WALL, WALL], [SF + SH - WALL, 0]]) pts.push([x, y, z]);
+    body = add(body, Mf().hull(pts).intersect(env));
   }
-  const LM = p.LOCK_MOUTH, LD = p.LOCK_DEPTH;
-  for (const xc of xcs) {
-    body = cut(body, trapPrism(2, Ho - WALL - ST - 0.1, Ho + 0.1, 1, 0, 1, 0, xc, LM, LD));
-    body = cut(body, trapPrism(2, -0.1, WALL + ST + 0.1, 1, 0, 1, 0, xc, LM, LD));
+  // lock pin holes through the ceiling and floor, front-left of each cell
+  for (const [x0, x1, y0, y1] of lockHoles(p, w)) {
+    body = cut(body, box(x0, x1, y0, y1, Ho - WALL - 0.1, Ho + 0.1));
+    body = cut(body, box(x0, x1, y0, y1, -0.1, WALL + 0.1));
   }
   const { DETENT_H: DH, DETENT_LEN: DL, DETENT_Z: DZ, SHELL_DETENT_Y: Y0 } = p;
   for (const zc of zcs) {
@@ -211,18 +223,22 @@ export function buildShell(p, w, h) {
 export function drawerDims(p, w, h) {
   const { GRID: G, DEPTH: D, GAP, WALL, STRIP_T: ST } = p;
   const Wo = G * w - GAP, Ho = p.GRID_Z * h - GAP;
-  const setback = p.LOCK_DEPTH + 0.3;
+  // the face front sits at `setback` (negative = proud of the shell front): its back seats 0.2 mm short of the
+  // rabbet floor at the detent position, so it lands on the seat when pushed home
+  const setback = p.FACE_SEAT - 0.2 - p.DRAWER_FRONT_T;
   const Wd = Wo - 2 * (WALL + ST + p.DRAWER_CLR);
   const Ld = D - WALL - ST - setback - p.DRAWER_BACK_CLR;
   const z0 = WALL + Math.min(p.DRAWER_BOTTOM_CLR, ST + p.DRAWER_FLOOR_CLR);
   const ch = Math.max(0, ST + p.DRAWER_FLOOR_CLR - p.DRAWER_BOTTOM_CLR);  // underside channel height over the floor strip
   const Hd = (Ho - WALL - p.DRAWER_TOP_CLR) - z0;
-  return { Wd, Ld, Hd, setback, z0, ch, Wo, Ho };
+  const OV = Math.max(0, WALL - p.FACE_LIP - p.FACE_CLR);  // how far the face overlaps the rim beyond the opening
+  const Hf = Hd + p.DRAWER_TOP_CLR + OV;                       // face height (bottom flush with the drawer floor)
+  return { Wd, Ld, Hd, setback, z0, ch, OV, Hf, Wo, Ho };
 }
 
 export function buildDrawer(p, w, h) {
   const { GRID: G, GAP, WALL, STRIP_T: ST, STRIP_W: SW } = p;
-  const { Wd, Ld, Hd, setback, z0, ch } = drawerDims(p, w, h);
+  const { Wd, Ld, Hd, setback, z0, ch, OV, Hf } = drawerDims(p, w, h);
   const DW = p.DRAWER_WALL, FL = p.DRAWER_FLOOR, FT = p.DRAWER_FRONT_T, CLR = p.DRAWER_CLR;
   let body = box(0, Wd, 0, Ld, 0, Hd);
   body = cut(body, box(DW, Wd - DW, FT, Ld - DW, FL, Hd + 1));
@@ -275,8 +291,21 @@ export function buildDrawer(p, w, h) {
     body = cut(body, box(xc - (SW + 1.0) / 2, xc + (SW + 1.0) / 2, -1, Ld + 1, Hd - nd, Hd + 1));
   }
   if (ch > 0) for (const c of channels) body = cut(body, c);
-  // fillet the front perimeter: rebuild the front r mm as thin slices of the outline, each inset by the
-  // rolling-ball profile (mitred at convex corners, rounded at concave ones)
+  // the face: a plate OV wider than the opening on both sides and the top (never below the floor, so the
+  // drawer still prints standing on it), with rounded corners, in front of everything else
+  const fx0 = -ST - CLR - OV, fx1 = Wd + ST + CLR + OV;
+  body = add(body, Mf().extrude(roundedRectXZ(fx0, fx1, 0, Hf, p.FACE_CORNER), FT).rotate([-90, 0, 0]));
+  // lock pin: a pillar inside the front-left corner of each cell with the pin hole through it and the floor
+  const ox = WALL + ST + CLR, oy = setback;
+  const holes = lockHoles(p, w).map(([x0, x1, y0, y1]) => [x0 - ox, x1 - ox, y0 - oy, y1 - oy]);
+  for (const [hx0, hx1, , hy1] of holes) {
+    // the first pillar grows out of the side wall; later ones stand on their own against the face
+    const bx0 = hx0 - DW <= DW + 0.5 ? DW - 0.01 : hx0 - DW;
+    body = add(body, box(bx0, hx1 + DW, FT - 0.01, hy1 + DW, 0, Hd));
+  }
+  for (const [hx0, hx1, hy0, hy1] of holes) body = cut(body, box(hx0, hx1, hy0, hy1, -1, Hd + 1));
+  // fillet the face perimeter: rebuild the front r mm as thin slices of the outline, each inset by the
+  // rolling-ball profile
   const r = Math.min(p.FILLET_DRAWER, FT - 0.3);
   if (r > 0) {
     const N = Math.max(8, Math.min(40, Math.ceil(r / 0.05)));
@@ -291,7 +320,7 @@ export function buildDrawer(p, w, h) {
   }
   // dome pull with pinch fin
   const R = p.DOME_R, DD = p.DOME_DEPTH, DT = p.DOME_WALL, TW = p.TAB_W;
-  const xp = Wd / 2, zp = Hd / 2, yc = -(R - DD);
+  const xp = Wd / 2, zp = Hf / 2, yc = -(R - DD);
   let cap = Mf().sphere(R + DT, 96).translate([xp, yc, zp]);
   cap = clip(cap, [0, 0, 0], [0, -1, 0]);
   body = add(body, cap);
@@ -325,7 +354,7 @@ export function buildDrawer(p, w, h) {
     const comps = body.decompose();
     if (comps.length > 1) body = comps.reduce((a, b) => (b.volume() > a.volume() ? b : a));
   }
-  return { body, info: { Wd, Ld, Hd, setback, z0 } };
+  return { body, info: { Wd, Ld, Hd, Hf, setback, z0 } };
 }
 
 export function buildKey(p, KL) {
@@ -343,14 +372,14 @@ export function buildKey(p, KL) {
 }
 
 export function buildLock(p, layers) {
-  const LL = p.GRID_Z * layers - p.GAP;
-  const m = p.LOCK_MOUTH - 2 * p.LOCK_CLR, d = p.LOCK_DEPTH - p.LOCK_CLR;
-  let body = trapPrism(2, 0, LL, 1, 0, 1, 0, 0, m, d);
-  body = add(body, box(-p.LOCK_HEAD_W / 2, p.LOCK_HEAD_W / 2, 0, d, LL, LL + p.LOCK_HEAD_H));
-  const hw = m / 2 + d;
-  body = clip(body, [hw - 1, 0, 0], [1, 0, -1]); body = clip(body, [-(hw - 1), 0, 0], [-1, 0, -1]);
-  body = clip(body, [0, d - 1, 0], [0, 1, -1]);
-  return { body, info: { LL, w: 2 * hw, t: d } };
+  // a pin dropped down a column through the ceiling and floor holes of every shell and the pillar in every
+  // drawer; the head rests on the top shell. Modelled standing, x across, y front to back.
+  const LL = p.GRID_Z * layers - p.GAP - 0.3, BW = p.LOCK_BAR_W, BT = p.LOCK_BAR_T, HW = p.LOCK_HEAD_W, HH = p.LOCK_HEAD_H;
+  let body = box(-BW / 2, BW / 2, -BT / 2, BT / 2, 0, LL);
+  body = add(body, box(-HW / 2, HW / 2, -BT / 2, BT / 2, LL, LL + HH));
+  body = clip(body, [BW / 2 - 0.6, 0, 0], [1, 0, -1]); body = clip(body, [-(BW / 2 - 0.6), 0, 0], [-1, 0, -1]);
+  body = clip(body, [0, BT / 2 - 0.6, 0], [0, 1, -1]); body = clip(body, [0, -(BT / 2 - 0.6), 0], [0, -1, -1]);
+  return { body, info: { LL, w: BW, t: BT } };
 }
 
 export function buildHanger(p, layers) {
@@ -392,7 +421,7 @@ function buildSpacer(p, L, W, H, nubXs) {
 const ORI = {
   shell: (p) => [[0, 0, p.DEPTH], [1, 0, 0], [0, 0, -1], [0, 1, 0]],
   key: () => [[0, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0]],
-  lock: (p, i) => [[0, 0, i.t], [1, 0, 0], [0, 0, -1], [0, 1, 0]],
+  lock: (p, i) => [[0, 0, i.t / 2], [1, 0, 0], [0, 0, -1], [0, 1, 0]],
   ledger: (p, i) => [[0, i.W, 0], [1, 0, 0], [0, 0, 1], [0, -1, 0]],
   spacer: (p, i) => [[0, i.W, i.H], [1, 0, 0], [0, -1, 0], [0, 0, -1]],
 };
@@ -409,7 +438,7 @@ export const PART_KINDS = [
   { id: 'module', label: 'Module: shell with drawer in (preview)', cells: true },
   { id: 'key', label: 'Key (layer joints)' },
   { id: 'key back', label: 'Key (back-to-back)' },
-  { id: 'lock', label: 'Lock strip', layers: true },
+  { id: 'lock', label: 'Lock pin', layers: true },
   { id: 'hanger', label: 'Wall hanger', layers: true },
   { id: 'ledger', label: 'Wall ledger' },
   { id: 'spacers', label: 'IKEA Alex spacers' },
@@ -424,12 +453,13 @@ export function build(p, kind, w = 1, h = 1, layers = 2) {
     case 'module': {
       const sh = buildShell(p, w, h), dr = buildDrawer(p, w, h);
       const { setback, z0 } = dr.info;
-      const body = sh.body.add(dr.body.translate([p.WALL + p.STRIP_T + p.DRAWER_CLR, setback, z0]));
+      const lk = buildLock(p, h).body.translate([p.LOCK_X, p.LOCK_Y, 0.3]);
+      const body = sh.body.add(dr.body.translate([p.WALL + p.STRIP_T + p.DRAWER_CLR, setback, z0])).add(lk);
       return [out(`Module ${w}x${h}`, { body, info: sh.info }, null)];
     }
     case 'key': return [out('Key', buildKey(p), 'key')];
     case 'key back': return [out('Key back', buildKey(p, p.BACK_KEY_LEN), 'key')];
-    case 'lock': return [out(`Lock strip ${layers} layers`, buildLock(p, layers), 'lock')];
+    case 'lock': return [out(`Lock pin ${layers} layers`, buildLock(p, layers), 'lock')];
     case 'hanger': return [out(`Wall hanger ${layers} layers`, buildHanger(p, layers), null)];
     case 'ledger': return [out('Wall ledger', buildLedger(p), 'ledger')];
     case 'spacers': {
@@ -449,13 +479,14 @@ export function describe(p, kind, w = 1, h = 1, layers = 2) {
   const Wo = G * w - GAP, Ho = GZ * h - GAP;
   switch (kind) {
     case 'shell': return `Shell ${w}x${h}: ${Wo.toFixed(1)} wide × ${Ho.toFixed(1)} tall × ${D} deep mm`;
-    case 'module': return `Module ${w}x${h}: shell and drawer together, front up — for looking at the face, not for printing`;
+    case 'module': return `Module ${w}x${h}: shell with its drawer seated and the lock pin in — for looking at, not for printing`;
     case 'drawer': {
       const { Ld, Hd } = drawerDims(p, w, h);
       const iw = Wo - 2 * (WALL + p.DRAWER_CLR + p.DRAWER_WALL), il = Ld - p.DRAWER_FRONT_T - p.DRAWER_WALL, ih = Hd - p.DRAWER_FLOOR;
-      return `Drawer ${w}x${h}: inside ${iw.toFixed(0)} × ${il.toFixed(0)} × ${ih.toFixed(0)} mm (${(iw * il * ih / 1e6).toFixed(2)} L)`;
+      const { OV } = drawerDims(p, w, h);
+      return `Drawer ${w}x${h}: inside ${iw.toFixed(0)} × ${il.toFixed(0)} × ${ih.toFixed(0)} mm (${(iw * il * ih / 1e6).toFixed(2)} L); face ${(Wo - 2 * (WALL - OV)).toFixed(1)} wide, ${(p.DRAWER_FRONT_T - p.FACE_SEAT + 0.2).toFixed(1)} mm proud`;
     }
-    case 'lock': return `Lock strip for ${layers} layers: ${(GZ * layers - GAP + p.LOCK_HEAD_H).toFixed(1)} mm long`;
+    case 'lock': return `Lock pin for ${layers} layers: ${(GZ * layers - GAP - 0.3 + p.LOCK_HEAD_H).toFixed(1)} mm long, one per column`;
     case 'hanger': {
       const L = p.HANGER_FOOT_T + layers * GZ + p.HANGER_TOP_MARGIN;
       return `Wall hanger for ${layers} layers: ${L} mm long, ledgers ${L - p.LEDGER_W} mm apart`;
