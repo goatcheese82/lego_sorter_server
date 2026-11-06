@@ -19,7 +19,7 @@ export const DEFAULTS = {
   HANGER_W: 30, HANGER_T: 6, HANGER_RIB_LEN: 80, HANGER_FOOT_D: 12, HANGER_FOOT_T: 5, HANGER_TOP_MARGIN: 5,
   LEDGER_LEN: 250, LEDGER_W: 34, LEDGER_T: 4, LEDGER_RIB_W: 6, LEDGER_RIB_H: 3, LEDGER_CLR: 0.15, LEDGER_HOLE_PITCH: 25,
   ALEX_W: 292, ALEX_D: 524, ALEX_COLS: 3, ALEX_ROWS: 10, SPACER_H: 25, SPACER_WALL: 1.2,
-  FILLET_SHELL: 0.8, FILLET_DRAWER: 0.8,
+  FILLET_SHELL: 0.8, RIM_ROUND: 0.45, FILLET_DRAWER: 1.6,
 };
 
 // Parameter groups and one-line descriptions for the Advanced panel.
@@ -48,7 +48,7 @@ export const PARAM_GROUPS = [
     NUB_LEN: 'spacer nub length', NUB_CLR: 'nub and rib clearance',
   }],
   ['Finish', {
-    FILLET_SHELL: 'round on the shell outer edges (0 = sharp)', FILLET_DRAWER: 'round on the drawer front edges (0 = sharp)',
+    FILLET_SHELL: 'round on the shell outer edges (0 = sharp)', RIM_ROUND: 'bullnose on the shell front rim, up to half the wall (0 = sharp)', FILLET_DRAWER: 'round on the drawer front edges, up to the front plate thickness (0 = sharp)',
   }],
   ['IKEA Alex spacers', {
     ALEX_W: 'drawer inside width', ALEX_D: 'drawer inside depth', ALEX_COLS: 'modules across', ALEX_ROWS: 'modules along', SPACER_H: 'spacer height', SPACER_WALL: 'spacer wall',
@@ -102,6 +102,15 @@ function roundedBox(x0, x1, y0, y1, z0, z1, r) {
   for (const x of [x0 + r, x1 - r]) for (const y of [y0 + r, y1 - r]) for (const z of [z0 + r, z1 - r]) s.push(Mf().sphere(r, 16).translate([x, y, z]));
   return Mf().hull(s);
 }
+// the same with a flat, sharp-edged front face (y0): spheres at the back corners, thin discs at the front
+function roundedBoxOpenFront(x0, x1, y0, y1, z0, z1, r) {
+  const s = [];
+  for (const x of [x0 + r, x1 - r]) for (const z of [z0 + r, z1 - r]) {
+    s.push(Mf().sphere(r, 16).translate([x, y1 - r, z]));
+    s.push(Mf().cylinder(0.01, r, r, 16).rotate([-90, 0, 0]).translate([x, y0, z]));
+  }
+  return Mf().hull(s);
+}
 // rolling-ball inset at depth y below a face for a fillet of radius r on its perpendicular edges
 const filletInset = (r, y) => r - Math.sqrt(Math.max(0, r * r - (r - y) * (r - y)));
 
@@ -127,7 +136,7 @@ export function buildShell(p, w, h) {
   const xcs = [...Array(w)].map((_, i) => G * (i + 0.5) - GAP / 2);
   const zcs = [...Array(h)].map((_, j) => GZ * (j + 0.5) - GAP / 2);
   const fr = p.FILLET_SHELL;
-  let body = fr > 0 ? roundedBox(0, Wo, 0, D, 0, Ho, Math.min(fr, WALL)) : box(0, Wo, 0, D, 0, Ho);
+  let body = fr > 0 ? roundedBoxOpenFront(0, Wo, 0, D, 0, Ho, Math.min(fr, WALL)) : box(0, Wo, 0, D, 0, Ho);
   body = cut(body, box(WALL, Wo - WALL, -1, D - WALL, WALL, Ho - WALL));
   // strips reach 0.1 mm into the wall, never to the outer face, so the rounded envelope stays untouched
   const e = WALL - 0.1;
@@ -162,6 +171,20 @@ export function buildShell(p, w, h) {
     } else {
       body = cut(body, trapPrism(2, -1, Ho + 1, 1, D, -1, 0, xc, KM, KD));
     }
+  }
+  // bullnose the front rim: rebuild the front rr mm as slices of the rim outline, inset from both of its
+  // edges by the rolling-ball profile (the rim and the strip ends become half-rounds)
+  const rr = Math.min(p.RIM_ROUND, WALL / 2);
+  if (rr > 0) {
+    const N = Math.max(6, Math.min(24, Math.ceil(rr / 0.05)));
+    const outline = body.rotate([90, 0, 0]).slice(rr + 0.3);
+    let stack = clip(body, [0, rr, 0], [0, -1, 0]);
+    for (let k = 0; k < N; k++) {
+      const y0 = rr * k / N, d = filletInset(rr, y0);
+      const sl = d > 1e-4 ? outline.offset(-d, 'Round', 2, 16) : outline;
+      stack = add(stack, Mf().extrude(sl, rr / N + 1e-3).rotate([-90, 0, 0]).translate([0, y0, 0]));
+    }
+    body = stack;
   }
   const LM = p.LOCK_MOUTH, LD = p.LOCK_DEPTH;
   for (const xc of xcs) {
@@ -239,9 +262,9 @@ export function buildDrawer(p, w, h) {
   }
   // fillet the front perimeter: rebuild the front r mm as thin slices of the outline, each inset by the
   // rolling-ball profile (mitred at convex corners, rounded at concave ones)
-  const r = Math.min(p.FILLET_DRAWER, DW);
+  const r = Math.min(p.FILLET_DRAWER, FT - 0.3);
   if (r > 0) {
-    const N = 16;
+    const N = Math.max(8, Math.min(40, Math.ceil(r / 0.05)));
     const outline = body.rotate([90, 0, 0]).slice(Math.min(FT, r) / 2);
     let stack = clip(body, [0, r, 0], [0, -1, 0]);
     for (let k = 0; k < N; k++) {
@@ -368,6 +391,7 @@ function oriented(m, ori) {
 export const PART_KINDS = [
   { id: 'shell', label: 'Shell', cells: true },
   { id: 'drawer', label: 'Drawer', cells: true },
+  { id: 'module', label: 'Module: shell with drawer in (preview)', cells: true },
   { id: 'key', label: 'Key (layer joints)' },
   { id: 'key back', label: 'Key (back-to-back)' },
   { id: 'lock', label: 'Lock strip', layers: true },
@@ -382,6 +406,12 @@ export function build(p, kind, w = 1, h = 1, layers = 2) {
   switch (kind) {
     case 'shell': return [out(`Shell ${w}x${h}`, buildShell(p, w, h), 'shell')];
     case 'drawer': return [out(`Drawer ${w}x${h}`, buildDrawer(p, w, h), null)];
+    case 'module': {
+      const sh = buildShell(p, w, h), dr = buildDrawer(p, w, h);
+      const { setback, z0 } = dr.info;
+      const body = sh.body.add(dr.body.translate([p.WALL + p.STRIP_T + p.DRAWER_CLR, setback, z0]));
+      return [out(`Module ${w}x${h}`, { body, info: sh.info }, null)];
+    }
     case 'key': return [out('Key', buildKey(p), 'key')];
     case 'key back': return [out('Key back', buildKey(p, p.BACK_KEY_LEN), 'key')];
     case 'lock': return [out(`Lock strip ${layers} layers`, buildLock(p, layers), 'lock')];
@@ -404,6 +434,7 @@ export function describe(p, kind, w = 1, h = 1, layers = 2) {
   const Wo = G * w - GAP, Ho = GZ * h - GAP;
   switch (kind) {
     case 'shell': return `Shell ${w}x${h}: ${Wo.toFixed(1)} wide × ${Ho.toFixed(1)} tall × ${D} deep mm`;
+    case 'module': return `Module ${w}x${h}: shell and drawer together, front up — for looking at the face, not for printing`;
     case 'drawer': {
       const { Ld, Hd } = drawerDims(p, w, h);
       const iw = Wo - 2 * (WALL + p.DRAWER_CLR + p.DRAWER_WALL), il = Ld - p.DRAWER_FRONT_T - p.DRAWER_WALL, ih = Hd - p.DRAWER_FLOOR;

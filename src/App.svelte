@@ -126,7 +126,7 @@
         <button class="primary" onclick={generate} disabled={!ready || busy}>
           {busy ? 'Building…' : stale ? 'Generate' : 'Regenerate'}
         </button>
-        <button onclick={downloadAll} disabled={!parts.length || stale || busy}>
+        <button onclick={downloadAll} disabled={!parts.length || stale || busy || kind === 'module'}>
           Download STL{parts.length > 1 ? 's' : ''}
         </button>
       </div>
@@ -145,7 +145,7 @@
             {/each}
           </tbody>
         </table>
-        <p class="hint">Mass is solid-modelled PLA; print orientation as shown. No supports on any part. Shell edges and the drawer front are rounded {params.FILLET_SHELL > 0 || params.FILLET_DRAWER > 0 ? `(${params.FILLET_SHELL} / ${params.FILLET_DRAWER} mm)` : '(off)'}.</p>
+        <p class="hint">Mass is solid-modelled PLA; print orientation as shown. No supports on any part. Rounds: shell edges {params.FILLET_SHELL} mm, shell rim {params.RIM_ROUND} mm, drawer front {params.FILLET_DRAWER} mm (0 = sharp, under Finish).</p>
       {/if}
     </section>
 

@@ -119,5 +119,7 @@ export function createPreview(canvas) {
     camera.near = r / 50; camera.far = r * 50; camera.updateProjectionMatrix();
     controls.update();
   }
-  return { show, dispose() { alive = false; controls.dispose(); renderer.dispose(); } };
+  const api = { show, dispose() { alive = false; controls.dispose(); renderer.dispose(); }, camera, controls };
+  try { window.__preview = api; } catch {}
+  return api;
 }
