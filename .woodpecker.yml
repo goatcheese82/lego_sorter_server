@@ -1,0 +1,25 @@
+when:
+  - event: [push, tag]
+
+steps:
+  test:
+    image: node:22-alpine
+    commands:
+      - npm ci
+      - npm test
+      - npm run build
+    when:
+      - event: push
+
+  publish:
+    image: plugins/docker
+    privileged: true
+    settings:
+      registry: 10.0.2.166:5000
+      repo: 10.0.2.166:5000/goatcheese/lego-sorter
+      insecure: true
+      tags:
+        - latest
+        - ${CI_COMMIT_TAG}
+    when:
+      - event: tag
