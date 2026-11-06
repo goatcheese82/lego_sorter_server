@@ -4,15 +4,18 @@ A standalone web app that generates print-ready STL files for every part of the 
 drawer system: shells, drawers, keys, lock strips, wall hangers, the wall ledger and IKEA Alex spacers,
 in any size on the grid. Everything is computed in the browser; nothing is uploaded anywhere.
 
-The geometry is a line-for-line port of the Fusion 360 generator (`lego_sorter_gen.py`) to the
-[Manifold](https://github.com/elalish/manifold) CSG engine, verified to match Fusion's volumes to
-within 0.7% on every part, and builds its rounds by construction: a rounded envelope for the shell
-(`FILLET_SHELL`, 0.8), 45° chamfers on the shell's front rim — into the drawer seat (`RIM_CHAMFER_IN`, 0.5)
-and on the outside (`RIM_CHAMFER_OUT`, 0.3), leaving a thin ridge — rolling-ball slices for the drawer front's
-perimeter (`FILLET_DRAWER`, 1.6 — up to the front plate thickness), an exact torus cut at the dome rim. All
-are in Advanced → Finish; 0 turns one off. The drawer sits 1 mm above the shell floor (`DRAWER_BOTTOM_CLR`),
-with a channel in its underside over the floor strip, so top and bottom gaps match. The "Module" part shows a
-shell with its drawer in, for judging the face — it isn't downloadable.
+The geometry started as a line-for-line port of the Fusion 360 generator (`lego_sorter_gen.py`) to the
+[Manifold](https://github.com/elalish/manifold) CSG engine; the keys, hangers, ledger and spacers still match
+Fusion's volumes to within 0.6%. Shells and drawers have moved on: the drawer face is a plate wider and
+taller than the body, sitting `FACE_SETBACK` (2.8) mm inside the shell front behind the lock strip and covering
+the rail ends; a sill across the shell floor rises to `SILL_CLR` (0.2) under the drawer; the drawer sits
+`DRAWER_BOTTOM_CLR` (1.0) above the floor with an underside channel over the floor strip. Rounds are built by
+construction: `FILLET_SHELL` (0.8) on the shell's outer edges, `RIM_CHAMFER_IN` / `_OUT` (0.5 / 0.3) on the
+front rim, `FILLET_DRAWER` (1.6) rolling-ball slices on the face perimeter, `FACE_CORNER` (0.3) on the face
+corners, an exact torus cut at the dome rim; 0 turns one off. A **lock strip** down each column locks the
+drawers for transport; a **lock strip pair** (two back to back) dropped into the notches of two blocks standing
+face to face joins the blocks and locks both. The "Module" part shows a shell with its drawer seated and a
+strip in, for judging the face — it isn't downloadable.
 
 ## Use it
 

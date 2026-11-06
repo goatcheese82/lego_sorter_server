@@ -145,7 +145,7 @@
             {/each}
           </tbody>
         </table>
-        <p class="hint">Mass is solid-modelled PLA; print orientation as shown. No supports on any part. Finish: shell edges rounded {params.FILLET_SHELL} mm, rim chamfered {params.RIM_CHAMFER_IN} in / {params.RIM_CHAMFER_OUT} out, drawer front rounded {params.FILLET_DRAWER} mm (0 = square, under Finish).</p>
+        <p class="hint">Mass is solid-modelled PLA; print orientation as shown. No supports on any part. Finish: shell edges rounded {params.FILLET_SHELL} mm, rim chamfered {params.RIM_CHAMFER_IN} in / {params.RIM_CHAMFER_OUT} out, drawer face edges rounded {params.FILLET_DRAWER} mm (0 = square, under Finish).</p>
       {/if}
     </section>
 
@@ -177,10 +177,10 @@
       <details>
         <summary>How the system goes together</summary>
         <ul>
-          <li><b>Shells</b> print on their back; <b>drawers</b> upright; <b>keys</b> standing; strips, ledger and spacers flat; the <b>hanger</b> on its foot. 0.2 mm layers, 2 walls (3 for drawers), no infill needed for shells and drawers; keys and lock strips at 100%.</li>
+          <li><b>Shells</b> print on their back; <b>drawers</b> upright; <b>keys</b> standing; lock strips, ledger and spacers flat; the <b>hanger</b> on its foot. 0.2 mm layers, 2 walls (3 for drawers), no infill needed for shells and drawers; keys and lock strips at 100%.</li>
           <li>Stand shells on the grid, fronts flush. From the back, push a <b>Key</b> into each pair of facing grooves and 5 mm past the face; it clicks past the pinch. Any order works.</li>
-          <li>Drawers slide in from the front, hanging on the shell's side strips, and click shut on the last 3 mm.</li>
-          <li>To move: drop a <b>lock strip</b> down each column from the top. Two blocks back to back: a <b>back key</b> dropped into each module's back channel.</li>
+          <li>Drawers slide in from the front, hanging on the shell's side strips, and click shut on the last 3 mm; the face sits {params.FACE_SETBACK} mm inside the shell front.</li>
+          <li>To move: drop a <b>lock strip</b> down each column from the top; it runs in front of every drawer face. Two blocks <b>face to face</b>: a <b>lock strip pair</b> down each column joins the blocks and locks both sets of drawers inside. Two blocks back to back: a <b>back key</b> dropped into each module's back channel.</li>
           <li>Wall: screw two <b>ledgers</b> into studs, slide a <b>hanger</b> onto them at each column, lift the block 80 mm and lower it onto the hanger ribs.</li>
         </ul>
       </details>
