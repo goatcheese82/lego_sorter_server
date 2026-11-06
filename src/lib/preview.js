@@ -2,6 +2,38 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 
 // Small three.js viewer: one or two meshes, Z-up, turntable controls, a print-bed outline for scale.
+// Feature edges of a Manifold mesh: edges whose two faces meet at more than `angleDeg`, skipping faces
+// thinner than `minAlt` (the stair-steps that approximate the fillets would otherwise draw as a dense band).
+function featureEdges(mesh, angleDeg, minAlt) {
+  const np = mesh.numProp, vp = mesh.vertProperties, tv = mesh.triVerts, nT = tv.length / 3;
+  const P = (i) => [vp[i * np], vp[i * np + 1], vp[i * np + 2]];
+  const normals = new Float32Array(nT * 3), thin = new Uint8Array(nT);
+  for (let t = 0; t < nT; t++) {
+    const a = P(tv[3 * t]), b = P(tv[3 * t + 1]), c = P(tv[3 * t + 2]);
+    const u = [b[0] - a[0], b[1] - a[1], b[2] - a[2]], v = [c[0] - a[0], c[1] - a[1], c[2] - a[2]];
+    const n = [u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0]];
+    const l = Math.hypot(...n) || 1;
+    normals.set([n[0] / l, n[1] / l, n[2] / l], 3 * t);
+    const e = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1], p[2] - q[2]);
+    const longest = Math.max(e(a, b), e(b, c), e(c, a));
+    thin[t] = l / longest < minAlt ? 1 : 0;  // altitude = 2*area / longest edge
+  }
+  const seen = new Map(), out = [];
+  const cosT = Math.cos((angleDeg * Math.PI) / 180);
+  for (let t = 0; t < nT; t++) {
+    for (let k = 0; k < 3; k++) {
+      const i = tv[3 * t + k], j = tv[3 * t + ((k + 1) % 3)];
+      const key = i < j ? i * 4294967296 + j : j * 4294967296 + i;
+      const other = seen.get(key);
+      if (other === undefined) { seen.set(key, t); continue; }
+      if (thin[t] || thin[other]) continue;
+      const d = normals[3 * t] * normals[3 * other] + normals[3 * t + 1] * normals[3 * other + 1] + normals[3 * t + 2] * normals[3 * other + 2];
+      if (d < cosT) out.push(...P(i), ...P(j));
+    }
+  }
+  return new Float32Array(out);
+}
+
 export function createPreview(canvas) {
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -71,7 +103,9 @@ export function createPreview(canvas) {
       const bb = part.print.boundingBox();
       const obj = new THREE.Group();
       obj.add(new THREE.Mesh(geo, material));
-      obj.add(new THREE.LineSegments(new THREE.EdgesGeometry(geo, 25), edgeMat));
+      const lines = new THREE.BufferGeometry();
+      lines.setAttribute('position', new THREE.BufferAttribute(featureEdges(mesh, 25, 0.12), 3));
+      obj.add(new THREE.LineSegments(lines, edgeMat));
       obj.position.set(x - bb.min[0], -bb.min[1], -bb.min[2]);
       group.add(obj);
       x += bb.max[0] - bb.min[0] + 15;
@@ -85,5 +119,7 @@ export function createPreview(canvas) {
     camera.near = r / 50; camera.far = r * 50; camera.updateProjectionMatrix();
     controls.update();
   }
-  return { show, dispose() { alive = false; controls.dispose(); renderer.dispose(); } };
+  const api = { show, dispose() { alive = false; controls.dispose(); renderer.dispose(); }, camera, controls };
+  try { window.__preview = api; } catch {}
+  return api;
 }

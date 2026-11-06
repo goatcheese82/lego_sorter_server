@@ -19,6 +19,7 @@ export const DEFAULTS = {
   HANGER_W: 30, HANGER_T: 6, HANGER_RIB_LEN: 80, HANGER_FOOT_D: 12, HANGER_FOOT_T: 5, HANGER_TOP_MARGIN: 5,
   LEDGER_LEN: 250, LEDGER_W: 34, LEDGER_T: 4, LEDGER_RIB_W: 6, LEDGER_RIB_H: 3, LEDGER_CLR: 0.15, LEDGER_HOLE_PITCH: 25,
   ALEX_W: 292, ALEX_D: 524, ALEX_COLS: 3, ALEX_ROWS: 10, SPACER_H: 25, SPACER_WALL: 1.2,
+  FILLET_SHELL: 0.8, RIM_ROUND: 0.45, FILLET_DRAWER: 1.6,
 };
 
 // Parameter groups and one-line descriptions for the Advanced panel.
@@ -45,6 +46,9 @@ export const PARAM_GROUPS = [
     HANGER_W: 'hanger width', HANGER_T: 'hanger thickness', HANGER_RIB_LEN: 'hanger rib length (and the lift to hang)', HANGER_FOOT_D: 'foot depth', HANGER_FOOT_T: 'foot thickness', HANGER_TOP_MARGIN: 'hanger length above the block',
     LEDGER_LEN: 'ledger length', LEDGER_W: 'ledger width', LEDGER_T: 'ledger base thickness', LEDGER_RIB_W: 'ledger rib root width', LEDGER_RIB_H: 'ledger rib height', LEDGER_CLR: 'ledger clearance', LEDGER_HOLE_PITCH: 'screw hole pitch',
     NUB_LEN: 'spacer nub length', NUB_CLR: 'nub and rib clearance',
+  }],
+  ['Finish', {
+    FILLET_SHELL: 'round on the shell outer edges (0 = sharp)', RIM_ROUND: 'bullnose on the shell front rim, up to half the wall (0 = sharp)', FILLET_DRAWER: 'round on the drawer front edges, up to the front plate thickness (0 = sharp)',
   }],
   ['IKEA Alex spacers', {
     ALEX_W: 'drawer inside width', ALEX_D: 'drawer inside depth', ALEX_COLS: 'modules across', ALEX_ROWS: 'modules along', SPACER_H: 'spacer height', SPACER_WALL: 'spacer wall',
@@ -92,6 +96,24 @@ function trapPrism(along, a0, a1, dax, face, dirn, wax, wc, mouth, depth) {
   return Mf().hull(pts);
 }
 
+// box with every edge and corner rounded by r: the convex hull of eight spheres
+function roundedBox(x0, x1, y0, y1, z0, z1, r) {
+  const s = [];
+  for (const x of [x0 + r, x1 - r]) for (const y of [y0 + r, y1 - r]) for (const z of [z0 + r, z1 - r]) s.push(Mf().sphere(r, 16).translate([x, y, z]));
+  return Mf().hull(s);
+}
+// the same with a flat, sharp-edged front face (y0): spheres at the back corners, thin discs at the front
+function roundedBoxOpenFront(x0, x1, y0, y1, z0, z1, r) {
+  const s = [];
+  for (const x of [x0 + r, x1 - r]) for (const z of [z0 + r, z1 - r]) {
+    s.push(Mf().sphere(r, 16).translate([x, y1 - r, z]));
+    s.push(Mf().cylinder(0.01, r, r, 16).rotate([-90, 0, 0]).translate([x, y0, z]));
+  }
+  return Mf().hull(s);
+}
+// rolling-ball inset at depth y below a face for a fillet of radius r on its perpendicular edges
+const filletInset = (r, y) => r - Math.sqrt(Math.max(0, r * r - (r - y) * (r - y)));
+
 function halfNub(p, along, a0, a1, dax, face, dirn, wax, wc, clr) {
   const c = clr ?? p.KEY_CLR;
   const m = p.KEY_MOUTH - 2 * c, d = p.KEY_DEPTH - c;
@@ -113,39 +135,56 @@ export function buildShell(p, w, h) {
   const Wo = G * w - GAP, Ho = GZ * h - GAP;
   const xcs = [...Array(w)].map((_, i) => G * (i + 0.5) - GAP / 2);
   const zcs = [...Array(h)].map((_, j) => GZ * (j + 0.5) - GAP / 2);
-  let body = box(0, Wo, 0, D, 0, Ho);
+  const fr = p.FILLET_SHELL;
+  let body = fr > 0 ? roundedBoxOpenFront(0, Wo, 0, D, 0, Ho, Math.min(fr, WALL)) : box(0, Wo, 0, D, 0, Ho);
   body = cut(body, box(WALL, Wo - WALL, -1, D - WALL, WALL, Ho - WALL));
+  // strips reach 0.1 mm into the wall, never to the outer face, so the rounded envelope stays untouched
+  const e = WALL - 0.1;
   for (const xc of xcs) {
-    body = add(body, box(xc - SW / 2, xc + SW / 2, 0, D, Ho - WALL - ST, Ho));
-    body = add(body, box(xc - SW / 2, xc + SW / 2, 0, D, 0, WALL + ST));
+    body = add(body, box(xc - SW / 2, xc + SW / 2, 0, D - e, Ho - WALL - ST, Ho - e));
+    body = add(body, box(xc - SW / 2, xc + SW / 2, 0, D - e, e, WALL + ST));
   }
   for (const zc of zcs) {
-    body = add(body, box(0, WALL + ST, 0, D, zc - SW / 2, zc + SW / 2));
-    body = add(body, box(Wo - WALL - ST, Wo, 0, D, zc - SW / 2, zc + SW / 2));
+    body = add(body, box(e, WALL + ST, 0, D - e, zc - SW / 2, zc + SW / 2));
+    body = add(body, box(Wo - WALL - ST, Wo - e, 0, D - e, zc - SW / 2, zc + SW / 2));
   }
-  for (const xc of xcs) body = add(body, box(xc - SW / 2, xc + SW / 2, D - WALL - ST, D, 0, Ho));
+  for (const xc of xcs) body = add(body, box(xc - SW / 2, xc + SW / 2, D - WALL - ST, D - e, e, Ho - e));
   const GL = p.KEY_LEN + 1 + p.KEY_SETBACK, KM = p.KEY_MOUTH, KD = p.KEY_DEPTH, det = p.KEY_DETENT;
+  // grooves are cut in segments: full width, then a narrower segment (the pinch) 1.5 mm long
   const groove = (dax, face, dirn, wax, wc) => {
-    body = cut(body, trapPrism(1, D - GL, D + 1, dax, face, dirn, wax, wc, KM, KD));
     if (det > 0) {
       const PI = p.PINCH_IN;
-      let sl = trapPrism(1, D - PI - 1.5, D - PI, dax, face, dirn, wax, wc, KM, KD);
-      sl = cut(sl, trapPrism(1, D - PI - 1.6, D - PI + 0.1, dax, face, dirn, wax, wc, KM - 2 * det, KD));
-      body = add(body, sl);
+      body = cut(body, trapPrism(1, D - GL, D - PI - 1.5, dax, face, dirn, wax, wc, KM, KD));
+      body = cut(body, trapPrism(1, D - PI, D + 1, dax, face, dirn, wax, wc, KM, KD));
+      body = cut(body, trapPrism(1, D - PI - 1.6, D - PI + 0.1, dax, face, dirn, wax, wc, KM - 2 * det, KD));
+    } else {
+      body = cut(body, trapPrism(1, D - GL, D + 1, dax, face, dirn, wax, wc, KM, KD));
     }
   };
   for (const xc of xcs) { groove(2, Ho, -1, 0, xc); groove(2, 0, 1, 0, xc); }
   for (const zc of zcs) { groove(0, 0, 1, 2, zc); groove(0, Wo, -1, 2, zc); }
   const BP = p.BACK_PINCH_Z;
   for (const xc of xcs) {
-    body = cut(body, trapPrism(2, -1, Ho + 1, 1, D, -1, 0, xc, KM, KD));
     if (det > 0) {
-      for (const [z0, z1] of [[BP, BP + 1.5], [Ho - BP - 1.5, Ho - BP]]) {
-        let sl = trapPrism(2, z0, z1, 1, D, -1, 0, xc, KM, KD);
-        sl = cut(sl, trapPrism(2, z0 - 0.1, z1 + 0.1, 1, D, -1, 0, xc, KM - 2 * det, KD));
-        body = add(body, sl);
-      }
+      for (const [z0, z1] of [[-1, BP], [BP + 1.5, Ho - BP - 1.5], [Ho - BP, Ho + 1]]) body = cut(body, trapPrism(2, z0, z1, 1, D, -1, 0, xc, KM, KD));
+      for (const [z0, z1] of [[BP - 0.1, BP + 1.6], [Ho - BP - 1.6, Ho - BP + 0.1]]) body = cut(body, trapPrism(2, z0, z1, 1, D, -1, 0, xc, KM - 2 * det, KD));
+    } else {
+      body = cut(body, trapPrism(2, -1, Ho + 1, 1, D, -1, 0, xc, KM, KD));
     }
+  }
+  // bullnose the front rim: rebuild the front rr mm as slices of the rim outline, inset from both of its
+  // edges by the rolling-ball profile (the rim and the strip ends become half-rounds)
+  const rr = Math.min(p.RIM_ROUND, WALL / 2);
+  if (rr > 0) {
+    const N = Math.max(6, Math.min(24, Math.ceil(rr / 0.05)));
+    const outline = body.rotate([90, 0, 0]).slice(rr + 0.3);
+    let stack = clip(body, [0, rr, 0], [0, -1, 0]);
+    for (let k = 0; k < N; k++) {
+      const y0 = rr * k / N, d = filletInset(rr, y0);
+      const sl = d > 1e-4 ? outline.offset(-d, 'Round', 2, 16) : outline;
+      stack = add(stack, Mf().extrude(sl, rr / N + 1e-3).rotate([-90, 0, 0]).translate([0, y0, 0]));
+    }
+    body = stack;
   }
   const LM = p.LOCK_MOUTH, LD = p.LOCK_DEPTH;
   for (const xc of xcs) {
@@ -181,16 +220,6 @@ export function buildDrawer(p, w, h) {
   const DW = p.DRAWER_WALL, FL = p.DRAWER_FLOOR, FT = p.DRAWER_FRONT_T, CLR = p.DRAWER_CLR;
   let body = box(0, Wd, 0, Ld, 0, Hd);
   body = cut(body, box(DW, Wd - DW, FT, Ld - DW, FL, Hd + 1));
-  // dome pull with pinch fin
-  const R = p.DOME_R, DD = p.DOME_DEPTH, DT = p.DOME_WALL, TW = p.TAB_W;
-  const xp = Wd / 2, zp = Hd / 2, yc = -(R - DD);
-  let cap = Mf().sphere(R + DT, 96).translate([xp, yc, zp]);
-  cap = clip(cap, [0, 0, 0], [0, -1, 0]);
-  body = add(body, cap);
-  let dish = Mf().sphere(R, 96).translate([xp, yc, zp]);
-  dish = clip(dish, [0, -1, 0], [0, -1, 0]);
-  dish = cut(dish, box(xp - TW / 2, xp + TW / 2, -R, R, zp - R, zp + R));
-  body = cut(body, dish);
   // side profile: full width with a flared recess where the shell strip runs
   const RC = CLR, RL = p.RUNNER_LIFT_CLR;
   const { DETENT_H: DH, DETENT_LEN: DL, DETENT_Z: DZ } = p;
@@ -230,6 +259,56 @@ export function buildDrawer(p, w, h) {
   for (let i = 0; i < w; i++) {
     const xc = (G * (i + 0.5) - GAP / 2) - (WALL + ST + CLR);
     body = cut(body, box(xc - (SW + 1.0) / 2, xc + (SW + 1.0) / 2, -1, Ld + 1, Hd - nd, Hd + 1));
+  }
+  // fillet the front perimeter: rebuild the front r mm as thin slices of the outline, each inset by the
+  // rolling-ball profile (mitred at convex corners, rounded at concave ones)
+  const r = Math.min(p.FILLET_DRAWER, FT - 0.3);
+  if (r > 0) {
+    const N = Math.max(8, Math.min(40, Math.ceil(r / 0.05)));
+    const outline = body.rotate([90, 0, 0]).slice(Math.min(FT, r) / 2);
+    let stack = clip(body, [0, r, 0], [0, -1, 0]);
+    for (let k = 0; k < N; k++) {
+      const y0 = r * k / N, d = filletInset(r, y0);
+      const sl = d > 1e-4 ? outline.offset(-d, 'Round', 2, 16) : outline;
+      stack = add(stack, Mf().extrude(sl, r / N + 1e-3).rotate([-90, 0, 0]).translate([0, y0, 0]));
+    }
+    body = stack;
+  }
+  // dome pull with pinch fin
+  const R = p.DOME_R, DD = p.DOME_DEPTH, DT = p.DOME_WALL, TW = p.TAB_W;
+  const xp = Wd / 2, zp = Hd / 2, yc = -(R - DD);
+  let cap = Mf().sphere(R + DT, 96).translate([xp, yc, zp]);
+  cap = clip(cap, [0, 0, 0], [0, -1, 0]);
+  body = add(body, cap);
+  let fin = box(xp - TW / 2, xp + TW / 2, -R, R, zp - R, zp + R);
+  if (r > 0) {
+    // round the fin's two front edges by trimming the fin's profile
+    for (const s of [-1, 1]) {
+      const xe = xp + s * TW / 2, xi = xe - s * r;
+      let sliver = box(Math.min(xe, xi), Math.max(xe, xi), -1, r, zp - R, zp + R);
+      sliver = cut(sliver, Mf().cylinder(2 * R + 2, r, r, 32).translate([xi, r, zp - R - 1]));
+      fin = cut(fin, sliver);
+    }
+  }
+  let dish = Mf().sphere(R, 96).translate([xp, yc, zp]);
+  dish = clip(dish, [0, -1, 0], [0, -1, 0]);
+  dish = cut(dish, fin);
+  body = cut(body, dish);
+  if (r > 0) {
+    // round the dish rim: remove the corner between the front face and the dish that a ball of radius r
+    // resting on both (center at depth r, radius rc from the dish axis) does not reach
+    const rc = Math.sqrt((R + r) ** 2 - (R - DD + r) ** 2);
+    // the ring is a hair larger than the ball so it overlaps the sphere instead of touching it tangentially
+    const ring = Mf().revolve(M.CrossSection.circle(r + 0.03, 24).translate([rc, r]), 96).rotate([-90, 0, 0]).translate([xp, 0, zp]);
+    // (the cut's own sphere sits 0.02 mm inside the cavity so no two surfaces coincide exactly)
+    let corner = Mf().cylinder(r + 1, rc, rc, 96).rotate([-90, 0, 0]).translate([xp, -1, zp]);
+    corner = clip(corner, [0, r, 0], [0, 1, 0]);
+    corner = cut(corner, Mf().sphere(R + 0.02, 96).translate([xp, yc, zp]));
+    corner = cut(corner, ring);
+    corner = cut(corner, box(xp - TW / 2, xp + TW / 2, -2, r + 1, zp - R, zp + R));
+    body = cut(body, corner);
+    const comps = body.decompose();
+    if (comps.length > 1) body = comps.reduce((a, b) => (b.volume() > a.volume() ? b : a));
   }
   return { body, info: { Wd, Ld, Hd, setback, z0 } };
 }
@@ -312,6 +391,7 @@ function oriented(m, ori) {
 export const PART_KINDS = [
   { id: 'shell', label: 'Shell', cells: true },
   { id: 'drawer', label: 'Drawer', cells: true },
+  { id: 'module', label: 'Module: shell with drawer in (preview)', cells: true },
   { id: 'key', label: 'Key (layer joints)' },
   { id: 'key back', label: 'Key (back-to-back)' },
   { id: 'lock', label: 'Lock strip', layers: true },
@@ -326,6 +406,12 @@ export function build(p, kind, w = 1, h = 1, layers = 2) {
   switch (kind) {
     case 'shell': return [out(`Shell ${w}x${h}`, buildShell(p, w, h), 'shell')];
     case 'drawer': return [out(`Drawer ${w}x${h}`, buildDrawer(p, w, h), null)];
+    case 'module': {
+      const sh = buildShell(p, w, h), dr = buildDrawer(p, w, h);
+      const { setback, z0 } = dr.info;
+      const body = sh.body.add(dr.body.translate([p.WALL + p.STRIP_T + p.DRAWER_CLR, setback, z0]));
+      return [out(`Module ${w}x${h}`, { body, info: sh.info }, null)];
+    }
     case 'key': return [out('Key', buildKey(p), 'key')];
     case 'key back': return [out('Key back', buildKey(p, p.BACK_KEY_LEN), 'key')];
     case 'lock': return [out(`Lock strip ${layers} layers`, buildLock(p, layers), 'lock')];
@@ -348,6 +434,7 @@ export function describe(p, kind, w = 1, h = 1, layers = 2) {
   const Wo = G * w - GAP, Ho = GZ * h - GAP;
   switch (kind) {
     case 'shell': return `Shell ${w}x${h}: ${Wo.toFixed(1)} wide × ${Ho.toFixed(1)} tall × ${D} deep mm`;
+    case 'module': return `Module ${w}x${h}: shell and drawer together, front up — for looking at the face, not for printing`;
     case 'drawer': {
       const { Ld, Hd } = drawerDims(p, w, h);
       const iw = Wo - 2 * (WALL + p.DRAWER_CLR + p.DRAWER_WALL), il = Ld - p.DRAWER_FRONT_T - p.DRAWER_WALL, ih = Hd - p.DRAWER_FLOOR;

@@ -6,8 +6,11 @@ in any size on the grid. Everything is computed in the browser; nothing is uploa
 
 The geometry is a line-for-line port of the Fusion 360 generator (`lego_sorter_gen.py`) to the
 [Manifold](https://github.com/elalish/manifold) CSG engine, verified to match Fusion's volumes to
-within 0.5% on every part. The one difference: the Fusion version adds 0.8 mm fillets to the shell
-corners and the drawer front; this version leaves those edges sharp.
+within 0.7% on every part, and builds its rounds by construction: a rounded envelope for the shell
+(`FILLET_SHELL`, 0.8), a bullnose on the shell's front rim (`RIM_ROUND`, 0.45 — half the wall), rolling-ball
+slices for the drawer front's perimeter (`FILLET_DRAWER`, 1.6 — up to the front plate thickness), an exact
+torus cut at the dome rim. All three are in Advanced → Finish; 0 turns one off. The "Module" part shows a
+shell with its drawer in, for judging the face — it isn't downloadable.
 
 ## Use it
 

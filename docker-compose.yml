@@ -1,0 +1,16 @@
+services:
+  lego-sorter:
+    image: 10.0.2.166:5000/goatcheese/lego-sorter:latest
+    container_name: lego-sorter
+    restart: unless-stopped
+    user: "1000:1000"
+    ports:
+      - "3008:3008"
+    environment:
+      PORT: "3008"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3008/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
