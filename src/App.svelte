@@ -145,7 +145,7 @@
             {/each}
           </tbody>
         </table>
-        <p class="hint">Mass is solid-modelled PLA; print orientation as shown. No supports on any part. Rounds: shell edges {params.FILLET_SHELL} mm, shell rim {params.RIM_ROUND} mm, drawer front {params.FILLET_DRAWER} mm (0 = sharp, under Finish).</p>
+        <p class="hint">Mass is solid-modelled PLA; print orientation as shown. No supports on any part. Finish: shell edges rounded {params.FILLET_SHELL} mm, rim chamfered {params.RIM_CHAMFER_IN} in / {params.RIM_CHAMFER_OUT} out, drawer front rounded {params.FILLET_DRAWER} mm (0 = square, under Finish).</p>
       {/if}
     </section>
 

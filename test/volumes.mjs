@@ -7,7 +7,8 @@ const REF = {
   'Wall ledger': 39.51, 'Alex side spacer': 26.59, 'Alex end spacer': 16.95,
 };
 await init();
-const p = { ...DEFAULTS, FILLET_SHELL: 0, FILLET_DRAWER: 0 };  // Fusion's reference volumes are pre-fillet
+// Fusion's reference volumes are pre-fillet (v20): no rounds or rim chamfers, drawer floating above the floor strip
+const p = { ...DEFAULTS, FILLET_SHELL: 0, FILLET_DRAWER: 0, RIM_CHAMFER_IN: 0, RIM_CHAMFER_OUT: 0, DRAWER_BOTTOM_CLR: DEFAULTS.STRIP_T + DEFAULTS.DRAWER_FLOOR_CLR };
 const jobs = [['shell', 1, 2], ['shell', 3, 2], ['drawer', 1, 2], ['drawer', 3, 2], ['lock', 1, 1, 4], ['hanger', 1, 1, 4], ['shell', 1, 1], ['shell', 2, 1], ['drawer', 1, 1], ['drawer', 2, 1], ['key'], ['key back'], ['lock', 1, 1, 2], ['hanger', 1, 1, 2], ['ledger'], ['spacers']];
 let bad = 0;
 for (const [kind, w = 1, h = 1, layers = 2] of jobs) {
@@ -25,7 +26,7 @@ for (const [kind, w = 1, h = 1, layers = 2] of jobs) {
 // filleted parts: one solid, no tunnels, and a hair lighter than sharp
 for (const [kind, w, h] of [['shell', 1, 1], ['shell', 3, 2], ['drawer', 1, 1], ['drawer', 2, 1], ['drawer', 1, 2], ['drawer', 3, 2]]) {
   const t0 = Date.now();
-  const f = build({ ...DEFAULTS }, kind, w, h)[0], u = build(p, kind, w, h)[0];
+  const f = build({ ...DEFAULTS }, kind, w, h)[0], u = build({ ...DEFAULTS, FILLET_SHELL: 0, FILLET_DRAWER: 0, RIM_CHAMFER_IN: 0, RIM_CHAMFER_OUT: 0 }, kind, w, h)[0];
   const dv = (f.body.volume() - u.body.volume()) / u.body.volume() * 100;
   const ok = f.body.decompose().length === 1 && f.body.genus() === 0 && dv < 0 && dv > -1.0;
   if (!ok) bad++;
